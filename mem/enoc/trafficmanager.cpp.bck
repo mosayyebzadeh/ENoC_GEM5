@@ -1,0 +1,407 @@
+
+
+#include <sstream>
+//#include <cmath>
+#include <iostream>
+#include <fstream>
+//#include <limits>
+#include <cstdlib>
+//#include <ctime>
+
+
+#include "NoCMain.h"
+#include "trafficmanager.h"
+#include "VirtualChannel.h"
+
+
+TrafficManager * TrafficManager::New(Network *  net)
+{
+    TrafficManager * result = NULL;
+    result = new TrafficManager( net);
+    return result;
+
+    
+}
+
+TrafficManager::TrafficManager(  Network *  net )
+    : Module( 0, "traffic_manager" ), _net(net)
+{
+
+    _nodes = _net->NumNodes( );
+    _routers = _net->NumRouters( );
+
+    _vcs = GlobalParams::num_vcs;
+
+	packet_table.resize(_nodes);
+	packet_queue.resize(_nodes);
+        in_use_vc.resize(_nodes);
+
+
+/*    string rf = config.GetStr("routing_function") + "_" + config.GetStr("topology");
+    map<string, tRoutingFunction>::const_iterator rf_iter = gRoutingFunctionMap.find(rf);
+    if(rf_iter == gRoutingFunctionMap.end()) {
+        Error("Invalid routing function: " + rf);
+    }
+    _rf = rf_iter->second;
+  */
+
+
+
+    //for (int i=0; i < _routers; ++i) {
+        _router = _net->GetRouters();
+    //}
+
+
+
+
+}
+
+TrafficManager::~TrafficManager( )
+{
+
+}
+
+unsigned int TrafficManager::toInt(char c)
+{
+  if (c >= '0' && c <= '9') return      c - '0';
+  if (c >= 'A' && c <= 'F') return 10 + c - 'A';
+  if (c >= 'a' && c <= 'f') return 10 + c - 'a';
+  return -1;
+}
+
+bool TrafficManager::load_traffic(char* fname){
+	cout<<"Loading traffic table: ..."<<endl;
+    // Open file
+
+	char tt[128] = "D:\\OurNoCSim\\OurNoCSim2\\Debug\\traces_lreg_10000.txt";
+	//tt= GlobalParams::traffic_table_filename;
+
+	//strcpy_s(tt,GlobalParams::traffic_table_filename);
+    ifstream fin(fname, ios::in);
+//	std::ifstream fin(tt);
+	//fin.open(tt, ios::in);
+    if (!fin)
+	return false;
+
+	int tmp = 0;
+ 
+    // Cycle reading file
+    while (!fin.eof()) 
+    {
+	char line[512];
+	fin.getline(line, sizeof(line) - 1);
+	//if (line[0] != '\0') 
+	//{
+		//if (line[0] != '%') 
+		//{
+		    int time;
+		    int vnet;
+		    char data[2*__CACHE_LINES_BYTE ];
+		//	string data;
+		    int src, dst;	
+                    int params = sscanf(line, "%d %d %d %d %s", &time, &src, &dst, &vnet, data );
+			//int params = sscanf_s(line, "%d %d %d %d %s", &time, sizeof(time), &src, sizeof(src), &dst, sizeof(dst), &vnet, sizeof(vnet), data, sizeof(data));
+			
+                    //std::istringstream iss(line);
+
+			//if (!(iss >> time >> src >> dst >> vnet >> data)) { break; } // error
+
+                    Packet pk;
+
+                    pk.src_id	=	src;
+                    pk.dst_id	=	dst;
+                    pk.time     = 	time;
+                    pk.data 	= 	data;
+
+                    //int coordx = src % GlobalParams::mesh_dim_x ; //GlobalParams::mesh_dim_x;
+                    //int coordy = src / GlobalParams::mesh_dim_x;  //GlobalParams::mesh_dim_x;
+				
+                    //if(coordx < GlobalParams::mesh_dim_x && coordy < GlobalParams::mesh_dim_y)
+                   // if(coordx < GlobalParams::mesh_dim_x && coordy < GlobalParams::mesh_dim_y)
+                    {
+			packet_table[src].push(pk);
+                    }//else
+                   // cout<<"no valid id"<<src<<endl;
+		//}
+		
+                    tmp = tmp + 1;
+
+		//cout << " t    " << time << " src    " << src << endl;
+		//}	
+    }
+   // cout << "tmp:	   "  << tmp <<endl;
+   
+   cout  << "traffic is loaded" << endl;
+
+    return  true;
+}
+
+bool TrafficManager::ReadPacket(Packet & pk, int time , int src)
+{
+
+	//Packet 
+	if (packet_table[src].empty() == false)
+	{
+		pk = packet_table[src].front();
+
+		//int now;// = getCurrentCycle() ;
+
+		if (time >= pk.time  && pk.src_id == src)
+			packet_table[src].pop();
+		else
+			return false;
+
+
+		int size_of_packet;
+
+		if (pk.data.length() == 1)
+			size_of_packet = 2;//DEFAULT_MIN_PACKET_SIZE;
+		else
+			size_of_packet = 18;//DEFAULT_MAX_PACKET_SIZE;
+
+		pk.size = pk.flit_left = size_of_packet;
+
+		//packet = pk;
+		return true;
+	}
+	else
+		return false;
+}
+
+
+Flit*  TrafficManager::nextFlit(int src)
+{
+    //Flit flit;
+    
+    Flit * flit  = Flit::New();
+    
+    static int seq =0;
+    
+    Packet packet = packet_queue[src].front();
+
+    flit->src_id      = packet.src_id;
+    flit->dst_id      = packet.dst_id;
+
+
+//masoud
+
+	flit->flit_is_inverted = false;
+
+	flit->flipNumber = 0;  				//set flip number of a flit to zero
+	std::stringstream str;
+	//string s1 = "0023fa8256000c00d0e0002418a000b0d065773000010020500a000c23fa8256000c000d0e0002418a0005773000010020500a3fa825e0002418a0000000000b";
+
+	string s1  = packet.data;
+	string s2;
+//	int value1;
+
+	int flit_size  ; 
+	int flit_left  = packet.flit_left;
+
+
+    if (packet.size == packet.flit_left)
+    {
+	flit->flit_type = FLIT_TYPE_HEAD;
+        seq = 0;
+    }
+    else if (packet.flit_left == 1)
+    {
+	flit->flit_type = FLIT_TYPE_TAIL;
+        seq++;
+    }
+    else
+    {
+	flit->flit_type = FLIT_TYPE_BODY;
+        seq++;
+
+		//	sc_uint<32> value_sc;
+
+			flit_size = 18 - flit_left -1; //DEFAULT_MAX_PACKET_SIZE
+			for (int j = 0; j <  8; j++)
+			{
+			 s2.push_back(s1[flit_size*8+j]);
+
+			}
+			uint8_t  output[4];
+
+			for (size_t i = 0; i < 4; i++)
+			{
+			  output[i] = 16 * toInt(s2[2*i]) + toInt(s2[2*i+1]);
+			
+			}
+
+
+              uint32_t u;
+                u = output[0];
+                u = (u  << 8) + output[1];
+                u = (u  << 8) + output[2];
+                u = (u  << 8) + output[3];
+			
+			flit->payload = u;
+            
+            
+			s2.clear();
+			str.clear();
+
+
+
+    }
+
+
+    flit->sequence_no = seq;
+    flit->timestamp = GlobalParams::global_clk;
+    packet_queue[src].front().flit_left--;
+    if (packet_queue[src].front().flit_left == 0){
+	packet_queue[src].pop();
+	packet_queue_length--;
+	}
+    return flit;
+}
+
+
+void TrafficManager::clk( int global_clk)
+{
+    Packet  pk;
+    Flit  *  f;
+	
+
+	_net->clk(global_clk);
+    
+	//Send and Recieve Packets
+    for(int nodes = 0; nodes < _nodes; nodes++)
+    {
+       bool readnewpk = ReadPacket(pk, global_clk, nodes);
+       
+       if (readnewpk == true)
+            packet_queue[nodes].push( pk );
+       
+      if(packet_queue[nodes].empty() == false){
+
+                /*vector<Router *> _ru = _net->GetRouters();//;
+                int out_vc = -1;
+                int occup_tmp = _ru[nodes]->_buf[4]->GetOccupancy(0);
+		int occup;
+                for ( int vc_number = 1; vc_number < _vcs; ++vc_number ){
+                    occup = _ru[nodes]->_buf[4]->GetOccupancy( vc_number );
+			if (occup <= occup_tmp)
+			{
+				out_vc = vc_number;
+				occup_tmp = occup;
+			}
+                }
+                if(out_vc != -1)
+                {
+                    if(_ru[nodes]->_buf[4]->GetOccupancy( out_vc ) >= 7)
+                    {
+                        out_vc = -1;
+                    }
+                    
+                }
+                if(out_vc != -1)
+                {
+                    f = nextFlit(nodes);
+                    f->vc = out_vc;
+                    _net->WriteFlit(f, nodes);
+                }*/
+                if(IsNextFlitHead(nodes) == true){
+                        int out_vc = FindIdleVC(nodes);
+                        
+                        if(out_vc != -1)
+                        {
+                                f = nextFlit(nodes);
+                                f->vc = out_vc;
+                                _net->WriteFlit(f, nodes);
+                                in_use_vc[nodes] = out_vc;
+                                
+                                int vc_number = out_vc;
+                                SetIdleStateForVC( nodes,  vc_number, VirtualChannel::routing);
+                                
+                        }
+                }
+                else
+                {
+                        if( FindFreeSpace(nodes, in_use_vc[nodes]) == true )
+                        {
+                          //  cout << " Body and Tail " << endl;
+                            
+                                f = nextFlit(nodes);
+                                f->vc = in_use_vc[nodes];
+                                if(f->flit_type == FLIT_TYPE_TAIL){
+                                        in_use_vc[nodes] = -1;
+                                }
+                                _net->WriteFlit(f, nodes);
+                        }
+                        
+                }                
+                               
+       }
+
+          
+    }
+
+}
+
+
+bool TrafficManager::IsNextFlitHead(int nodes)
+{
+	Packet packet = packet_queue[nodes].front();
+	if (packet.size == packet.flit_left)
+		return true;
+	else
+		return false;
+}
+bool TrafficManager::SetIdleStateForVC(int nodes, int vc_number, VirtualChannel::VCState s)
+{
+		vector<Router *> _ru = _net->GetRouters();//;
+		_ru[nodes]->_buf[4]->SetState( vc_number, s );
+}
+bool TrafficManager::FindFreeSpace(int nodes, int vc_number)
+{
+	if( vc_number != -1)
+	{
+		vector<Router *> _ru = _net->GetRouters();//;
+		int size = _ru[nodes]->_buf[4]->GetOccupancy( vc_number );
+		
+		if(size < GlobalParams::vcs_size)
+			return true;
+		else
+			return false;
+	}
+	else
+		return false;
+	
+}
+int TrafficManager::FindAvailableVC(int nodes)
+{
+	vector<Router *> _ru = _net->GetRouters();//;
+	int out_vc = -1;
+	int occup_tmp = _ru[nodes]->_buf[4]->GetOccupancy(0);
+	int occup;
+	for ( int vc_number = 1; vc_number < _vcs; ++vc_number ){
+		occup = _ru[nodes]->_buf[4]->GetOccupancy( vc_number );
+		if (occup <= occup_tmp)
+		{
+			out_vc = vc_number;
+			occup_tmp = occup;
+		}
+	}
+		return out_vc;
+					
+}
+
+int TrafficManager::FindIdleVC(int nodes)
+{
+	vector<Router *> _ru = _net->GetRouters();//;
+	 
+	VirtualChannel::VCState state ;
+	 
+	for ( int vc_number = 0; vc_number < _vcs; ++vc_number ){
+		state = _ru[nodes]->_buf[4]->GetState( vc_number );
+		
+			if (state == VirtualChannel::idle){
+				_ru[nodes]->_buf[4]->SetState( vc_number, VirtualChannel::routing );
+				return vc_number;
+			}
+		}
+		return -1;
+}
