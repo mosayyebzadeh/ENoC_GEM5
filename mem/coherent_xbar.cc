@@ -64,9 +64,13 @@ CoherentXBar::CoherentXBar(const CoherentXBarParams *p)
 {
 
 	/* AMIN_ST */
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
     	net = new NetworkNoC("network_0");
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
         trafficManager = TrafficManager::New(net);
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	enoc_gs = new GlobalStats(net);
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	/* AMIN_EN */
 	
 
@@ -649,17 +653,16 @@ CoherentXBar::recvAtomic(PacketPtr pkt, PortID slave_port_id)
             slavePorts[slave_port_id]->name(), pkt->print());
 
 	// AMIN_ST
-	PacketNoC packetNoC;
-	packetNoC.src_id = ((int)pkt->req->masterId()) % 6;
-	packetNoC.dst_id = (pkt->getAddr()) >> 20;
-	packetNoC.time = (int) pkt->req->time();
-	packetNoC.data = *(pkt->getPtr<int>());
-
-	trafficManager->load_traffic(packetNoC, packetNoC.src_id);
+	//trafficManager->load_traffic(packetNoC, packetNoC.src_id);
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+	trafficManager->process(pkt);
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	trafficManager->clk((int)curTick());
-		
-        //enoc_gs->showStats(std::cout);
+	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+
 	// AMIN_EN
+
+
 
     unsigned int pkt_size = pkt->hasData() ? pkt->getSize() : 0;
     unsigned int pkt_cmd = pkt->cmdToIndex();
@@ -752,11 +755,8 @@ CoherentXBar::recvAtomic(PacketPtr pkt, PortID slave_port_id)
     // @todo: Not setting header time
     pkt->payloadDelay = response_latency;
 
-/* AMIN_ST */
-//	printf("AMIIIIN TEST: coherent xbar %s: 1: %ld\n", __func__, response_latency);
-/* AMIN_ST */
-
     return response_latency;
+
 }
 
 Tick

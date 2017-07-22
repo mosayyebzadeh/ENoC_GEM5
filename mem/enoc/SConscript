@@ -47,5 +47,7 @@ Source('globalstats.cpp')
 Source('statsNoC.cpp')
 Source('routefunc.cpp')
 Source('router.cpp')
+Source('ENoC_Dir.cpp')
+Source('ENoC_cache.cpp')
 
 

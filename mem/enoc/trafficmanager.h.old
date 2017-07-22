@@ -13,16 +13,11 @@
 #include "routefunc.h"
 #include "NoCMain.h"
 #include "VirtualChannel.h"
-#include "ENoC_cache.h"
-#include "ENoC_Dir.h"
-#include "mem/packet.hh"
 
-class ENoCDir;
-class ENoCCache;
+
 
 class TrafficManager : public Module {
 
-	//friend class ENoCCache;
 private:
 
   vector<vector<int> > _packet_size;
@@ -37,21 +32,16 @@ protected:
   NetworkNoC * _net;
   vector<Router *>  _router;
   
+  
+  	vector<queue < PacketNoC > > packet_table;
+	vector<queue < PacketNoC > > packet_queue;	// Local queue of packets
+
 	int packet_queue_length;
-  vector<vector<int> > in_use_vc;                
+        
+        vector<int> in_use_vc;
+
 
 public:
-  
-	ENoCCache **L1DCache;
-	ENoCCache **L1ICache;
-	ENoCCache **L2Cache;
-	
-	ENoCDir *Directory;
-
-  vector<vector<queue < PacketNoC > > > packet_table;
-
-	vector<vector<queue < PacketNoC > > > packet_queue;	// Local queue of packets
-
 
   //static TrafficManager * New();
   static TrafficManager *New(NetworkNoC * net);
@@ -59,18 +49,16 @@ public:
   TrafficManager(NetworkNoC *net);
   virtual ~TrafficManager( );
 
-  void process(PacketPtr pkt);
-  bool load_traffic(PacketNoC packetNoC, int src, int type);
-  bool ReadPacket(PacketNoC & pk, int time , int src , int type);
-  Flit*  nextFlit(int src, int global_clk , int type);
+  bool load_traffic(PacketNoC packetNoC, int src);
+  bool ReadPacket(PacketNoC & pk, int time , int src);
+  Flit*  nextFlit(int src, int global_clk);
   void clk( int global_clk);
   unsigned int toInt(char c);
-  bool IsNextFlitHead(int nodes, int type);
+  bool IsNextFlitHead(int nodes);
   void SetIdleStateForVC(int nodes, int vc_number, VirtualChannel::VCState s);
   bool FindFreeSpace(int nodes, int vc_number);
   int FindAvailableVC(int nodes);
   int FindIdleVC(int nodes);  
-  void SendFlit(int nodes, int global_clk, int type);
   
 };
 

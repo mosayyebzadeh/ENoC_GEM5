@@ -9,6 +9,8 @@
 using namespace std;
 
 
+#define NUMBER_OF_NODES	64
+#define DIRECTORY_ADDRESS 31
 
 #define MAX_STATIC_DIM				 10
 #define DIRECTION_NORTH              0

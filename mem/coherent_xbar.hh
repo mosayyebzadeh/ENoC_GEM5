@@ -62,7 +62,7 @@
 #include "mem/enoc/Network.h"
 #include "mem/enoc/globalstats.h"
 #include "mem/enoc/NoCMain.h"
-
+#include "mem/enoc/ENoC_cache.h"
 
 extern GlobalStats *enoc_gs;
 
