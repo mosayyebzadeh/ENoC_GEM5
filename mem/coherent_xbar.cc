@@ -64,13 +64,13 @@ CoherentXBar::CoherentXBar(const CoherentXBarParams *p)
 {
 
 	/* AMIN_ST */
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
     	net = new NetworkNoC("network_0");
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
         trafficManager = TrafficManager::New(net);
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	enoc_gs = new GlobalStats(net);
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	/* AMIN_EN */
 	
 
@@ -654,11 +654,11 @@ CoherentXBar::recvAtomic(PacketPtr pkt, PortID slave_port_id)
 
 	// AMIN_ST
 	//trafficManager->load_traffic(packetNoC, packetNoC.src_id);
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	trafficManager->process(pkt);
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	trafficManager->clk((int)curTick());
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 	// AMIN_EN
 

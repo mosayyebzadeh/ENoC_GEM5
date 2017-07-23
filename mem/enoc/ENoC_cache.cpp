@@ -3,8 +3,8 @@
 
 ENoCCache::ENoCCache(int lines, int ways)
 {
-	LINES = lines-1;
-	WAYS = ways-1;
+	LINES = lines;
+	WAYS = ways;
 
 /*
 	Cache = new (cacheline*)[lines];
@@ -13,13 +13,13 @@ ENoCCache::ENoCCache(int lines, int ways)
 	}
 */
 
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	Cache = new cacheline*[lines];
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	for (int i = 0; i < lines; i++) {
      Cache[i] = new cacheline[ways];
 	}
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 }
 
 
@@ -56,19 +56,19 @@ void ENoCCache::setLRUbitsToWay()
 int ENoCCache::checkTag(int index, int tag)
 {
   int way;
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d: WAYS is %d\n", __func__, __LINE__, WAYS);
   for (way = 0; way < WAYS; way++)
   {
 	
-	printf("AMIN TEST: %s : %d: index: %d, way: %d\n", __func__, __LINE__, index, way);
-	if (index >= 8192)
-		index = 1000;
+//	printf("AMIN TEST: %s : %d: index: %d, way: %d\n", __func__, __LINE__, index, way);
+//	if (index >= 8192)
+//		index = 1000;
 
     if (Cache[index][way].tag == tag)
        return way;
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
   } 
-	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
   return WAYS;
 }
 
@@ -288,7 +288,7 @@ void ENoCCache::sendSharedData(int src, int node, PacketPtr pkt, int time, Traff
 
 	int tag = (pkt->getAddr()) >> 20;
 	int Lway = 0;
-	int Lindex = (pkt->getAddr() >> 6) & LINES;
+	int Lindex = (pkt->getAddr() >> 6) & (LINES-1);
 	int type = 2;
 
 		Lway = checkTag(Lindex, tag);

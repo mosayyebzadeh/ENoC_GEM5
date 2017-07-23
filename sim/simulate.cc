@@ -128,7 +128,6 @@ simulate(Tick num_cycles)
         inParallelMode = true;
     }
 
-	printf("AMIN : 15\n");
     // all subordinate (created) threads should be waiting on the
     // barrier; the arrival of the main thread here will satisfy the
     // barrier, and all threads will enter doSimLoop in parallel
@@ -136,20 +135,15 @@ simulate(Tick num_cycles)
     Event *local_event = doSimLoop(mainEventQueue[0]);
     assert(local_event != NULL);
 
-	printf("AMIN : 16\n");
     inParallelMode = false;
 
-	printf("AMIN : 17\n");
     // locate the global exit event and return it to Python
     BaseGlobalEvent *global_event = local_event->globalEvent();
     assert(global_event != NULL);
-	printf("AMIN : 18\n");
 
     GlobalSimLoopExitEvent *global_exit_event =
         dynamic_cast<GlobalSimLoopExitEvent *>(global_event);
-	printf("AMIN : 19\n");
     assert(global_exit_event != NULL);
-	printf("AMIN : 20\n");
 
     //! Delete the simulation quantum event.
     if (quantum_event != NULL) {
@@ -162,7 +156,6 @@ simulate(Tick num_cycles)
 //AMIN_EN
 
 
-	printf("AMIN : 21\n");
 
     return global_exit_event;
 }

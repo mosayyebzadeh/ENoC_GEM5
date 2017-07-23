@@ -10,7 +10,10 @@ using namespace std;
 
 
 #define NUMBER_OF_NODES	64
-#define DIRECTORY_ADDRESS 31
+#define DIRECTORY_ADDRESS_0 8
+#define DIRECTORY_ADDRESS_1 24
+#define DIRECTORY_ADDRESS_2 40
+#define DIRECTORY_ADDRESS_3 56
 
 #define MAX_STATIC_DIM				 10
 #define DIRECTION_NORTH              0
