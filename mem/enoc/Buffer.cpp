@@ -5,23 +5,23 @@
 #include "Buffer.h"
 #include "NoCMain.h"
 
-Buffer::Buffer( Module *parent, const string& name ) :
+Buffer::Buffer( const Configuration &config,Module *parent, const string& name ) :
 Module( parent, name )
  {
 
-  //_vc.resize(GlobalParams::num_vcs);
-  _vc.resize(DEFAULT_NUM_VCS);
-  //_occupancy.resize(GlobalParams::num_vcs);
-  _occupancy.resize(DEFAULT_NUM_VCS);
+  //int num_vcs = config.GetInt("num_vcs") ;   
+  int num_vcs = DEFAULT_NUM_VCS;
+  _vc.resize(num_vcs);
+  _occupancy.resize(num_vcs);
 
-  //_size = GlobalParams::vcs_size;
+  //_size = config.GetInt("vcs_size");
   _size = DEFAULT_VCS_SIZE;
 
-  //for(int i = 0; i < GlobalParams::num_vcs; ++i) {
-  for(int i = 0; i < DEFAULT_NUM_VCS; ++i) {
+  for(int i = 0; i < num_vcs; ++i) {
+  //for(int i = 0; i < DEFAULT_NUM_VCS; ++i) {
       ostringstream vc_name;
       vc_name << "vc_" << i;
-      _vc[i] = new VirtualChannel( this, vc_name.str( ) );
+      _vc[i] = new VirtualChannel( config, this, vc_name.str( ) );
   }
 
 }

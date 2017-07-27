@@ -5,12 +5,12 @@
 
 const char * const VirtualChannel::VCSTATE[] = {"idle", "routing", "vc_alloc", "active"};
 
-VirtualChannel::VirtualChannel( Module *parent, const string& name )
+VirtualChannel::VirtualChannel( const Configuration &config, Module *parent, const string& name )
   : Module( parent, name ), 
     _state(idle), _out_port(-1), _out_vc(-1)
 {    
     
-  
+    theConfig = &config;
     occupancy = 0;
   
 
@@ -67,10 +67,9 @@ void VirtualChannel::Route( int id,  Flit* f, int in_channel )
 int VirtualChannel::dor_next_mesh( int cur, int dest, bool descending )
 {
 int gN = 2 ; // Number  of dimensions  
-//int gK = GlobalParams::mesh_dim_x;
-//int gNodes = GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_x;
-int gK = DEFAULT_MESH_DIM_X;
-int gNodes = DEFAULT_MESH_DIM_X * DEFAULT_MESH_DIM_X;
+///int gK = theConfig->GetInt("dimx") ;//GlobalParams::mesh_dim_x;
+int gK = DEFAULT_MESH_DIM_X ;//GlobalParams::mesh_dim_x;
+int gNodes = DEFAULT_MESH_DIM_X * DEFAULT_MESH_DIM_X ;//GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_x;
   if ( cur == dest ) {
     return 2*gN;  // Eject
   }
@@ -114,8 +113,15 @@ void VirtualChannel::xy_yx_mesh( int id,  Flit *f, int in_channel  )
 	int cur_coordy = id / DEFAULT_MESH_DIM_X;
     
  	int dst_coordx = dst % DEFAULT_MESH_DIM_X;
-	int dst_coordy = dst / DEFAULT_MESH_DIM_X;    
+	int dst_coordy = dst / DEFAULT_MESH_DIM_X; 
 
+/*
+  int cur_coordx = id % theConfig->GetInt("dimx") ;//GlobalParams::mesh_dim_x;
+  int cur_coordy = id / theConfig->GetInt("dimx") ;//GlobalParams::mesh_dim_x;
+    
+  int dst_coordx = dst % theConfig->GetInt("dimx") ;//GlobalParams::mesh_dim_x;
+  int dst_coordy = dst / theConfig->GetInt("dimx") ;//GlobalParams::mesh_dim_x;    
+*/
   if( dst_coordx < cur_coordx)
       out_port = 1;   // west
   else if( dst_coordx > cur_coordx)  

@@ -40,6 +40,7 @@ class Flit {
         double           vc_allocator_dynamic_energy;        
         double           sw_allocator_dynamic_energy;        
         
+        int    packet_type;
 
 
     public:

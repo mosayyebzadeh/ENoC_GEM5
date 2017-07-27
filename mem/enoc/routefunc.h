@@ -14,7 +14,7 @@
 //typedef void (*tRoutingFunction)( const Router *,  Flit *, int in_channel  );
 
 
-class Router;
+class ENoCRouter;
 //#endif
 
-typedef void (*tRoutingFunction)( const Router *,  Flit *, int in_channel  );
+typedef void (*tRoutingFunction)( const ENoCRouter *,  Flit *, int in_channel  );

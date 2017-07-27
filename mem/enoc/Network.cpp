@@ -148,7 +148,7 @@ void NetworkNoC::_Alloc( )
   }
 }
 
-void NetworkNoC::buildMesh()
+void NetworkNoC::buildMesh(const Configuration &config)
 {
    
         int left_node;
@@ -175,7 +175,7 @@ void NetworkNoC::buildMesh()
 					}
                 }
             
-             _routers[node] = Router::NewRouter( this, router_name.str( ), node, 2*_n + 1, 2*_n + 1 );
+             _routers[node] = ENoCRouter::NewRouter( config, this, router_name.str( ), node, 2*_n + 1, 2*_n + 1 );
             
             _timed_modules.push_back(_routers[node]);
                       
@@ -220,11 +220,16 @@ void NetworkNoC::buildMesh()
 }
 
 
-NetworkNoC::NetworkNoC( const string & name ) :
+NetworkNoC::NetworkNoC( const Configuration &config, const string & name ) :
   TimedModule( 0, name )
 {
-    //_k = GlobalParams::mesh_dim_x;
-    _k = DEFAULT_MESH_DIM_X;
+
+
+
+
+
+   //_k = config.GetInt("dimx") ;//GlobalParams::mesh_dim_x;
+   _k = DEFAULT_MESH_DIM_X ;//GlobalParams::mesh_dim_x;
     _n = 2;
    _size     = powi( _k, _n );
 
@@ -234,7 +239,7 @@ NetworkNoC::NetworkNoC( const string & name ) :
   _channels = 2*_n*_size;  
   
     _Alloc( );
-    buildMesh(  );  
+    buildMesh(config);  
 }
 
 NetworkNoC::~NetworkNoC( )

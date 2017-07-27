@@ -14,12 +14,12 @@ FlitChannel::FlitChannel(Module * parent, string const & name, int classes)
   _active.resize(classes, 0);
 }
 
-void FlitChannel::SetSource(Router const * const router, int port) {
+void FlitChannel::SetSource(ENoCRouter const * const router, int port) {
   _routerSource = router;
   _routerSourcePort = port;
 }
 
-void FlitChannel::SetSink(Router const * const router, int port) {
+void FlitChannel::SetSink(ENoCRouter const * const router, int port) {
   _routerSink = router;
   _routerSinkPort = port;
 }

@@ -6,18 +6,18 @@
 #include <iostream>
 #include "routefunc.h"
 
-Router::Router( Module *parent, const string & name, int id,int inputs, int outputs ) :
+ENoCRouter::ENoCRouter(const Configuration &config, Module *parent, const string & name, int id,int inputs, int outputs ) :
 TimedModule( parent, name ), _id( id ), _inputs( inputs ), _outputs( outputs )
 {
-  //_vcs         = GlobalParams::num_vcs;
   _vcs         = DEFAULT_NUM_VCS;
+  //_vcs         = config.GetInt("num_vcs") ;//GlobalParams::num_vcs;
 
   // Alloc VC's
   _buf.resize(_inputs);
   for ( int i = 0; i < _inputs; ++i ) {
     ostringstream module_name;
     module_name << "buf_" << i;
-    _buf[i] = new Buffer( this, module_name.str( ) );
+    _buf[i] = new Buffer(config, this, module_name.str( ) );
     module_name.str("");    
   }
 
@@ -29,7 +29,9 @@ TimedModule( parent, name ), _id( id ), _inputs( inputs ), _outputs( outputs )
 //outputs = 4;
 
   // Alloc allocators
-  
+ 
+  theConfig = &config;
+ 
   int iters = 1 ;
 
   _vc_allocator = new iSLIP_Sparse( this, "vc_allocator",_vcs*_inputs, _vcs*_outputs,iters );
@@ -37,32 +39,37 @@ TimedModule( parent, name ), _id( id ), _inputs( inputs ), _outputs( outputs )
 
  // m_CrossbarTable = new Crossbar;
 
+
+  stats.energy_router.Initialize(config);
+  _swa.Initialize(config);
+  _vca.Initialize(config);
+
 }
 
 
-Router* Router::NewRouter(Module *parent, const string & name, int id,int inputs, int outputs )
+ENoCRouter* ENoCRouter::NewRouter(const Configuration &config, Module *parent, const string & name, int id,int inputs, int outputs )
 {
-       Router *r = NULL;
-       r = new Router( parent,  name,  id,  inputs,  outputs);
+       ENoCRouter *r = NULL;
+       r = new ENoCRouter(config, parent,  name,  id,  inputs,  outputs);
    //    r->_id = id;
 
        return r;
 }
-void Router::AddInputChannel( FlitChannel *channel  )
+void ENoCRouter::AddInputChannel( FlitChannel *channel  )
 {
   _input_channels.push_back( channel );
    
   channel->SetSink( this, _input_channels.size() - 1 ) ;
 }
 
-void Router::AddOutputChannel( FlitChannel *channel  )
+void ENoCRouter::AddOutputChannel( FlitChannel *channel  )
 {
   _output_channels.push_back( channel );
   
   channel->SetSource( this, _output_channels.size() - 1 ) ;
 }
 
-void Router::ReadInputs(int global_clk)
+void ENoCRouter::ReadInputs(int global_clk)
 {
     
   bool have_flits = _ReceiveFlits( );
@@ -71,7 +78,7 @@ void Router::ReadInputs(int global_clk)
 }
 
 
-bool Router::_ReceiveFlits( )
+bool ENoCRouter::_ReceiveFlits( )
 {
   bool activity = false;
   for(int input = 0; input < _inputs; ++input) { 
@@ -91,7 +98,7 @@ bool Router::_ReceiveFlits( )
 }
 
 
-void Router::clk(int global_clk)
+void ENoCRouter::clk(int global_clk)
 {
   _InputQueuing(global_clk);
   _vc_allocator->Clear();
@@ -106,7 +113,7 @@ void Router::clk(int global_clk)
 
 
 
-void Router::_InputQueuing(int global_clk)
+void ENoCRouter::_InputQueuing(int global_clk)
 {
   for(map<int, Flit *>::const_iterator iter = _in_queue_flits.begin(); iter != _in_queue_flits.end();  ++iter) 
   {
@@ -165,10 +172,10 @@ void Router::_InputQueuing(int global_clk)
 
 }
 
-int Router::FindIdleVC(int out_port , int dst_id)
+int ENoCRouter::FindIdleVC(int out_port , int dst_id)
 {
         
-        Router const *r = _output_channels[out_port]->GetSink();
+        ENoCRouter const *r = _output_channels[out_port]->GetSink();
         VirtualChannel::VCState state ;
         int in_port;
         
@@ -199,10 +206,10 @@ int Router::FindIdleVC(int out_port , int dst_id)
 			
 }
 
-void Router::SetIdleVC(int out_port, int vc_number )
+void ENoCRouter::SetIdleVC(int out_port, int vc_number )
 {
 
-	Router const *r = _output_channels[out_port]->GetSink();
+	ENoCRouter const *r = _output_channels[out_port]->GetSink();
 	//VirtualChannel::VCState state;
 	int in_port;
 
@@ -220,7 +227,7 @@ void Router::SetIdleVC(int out_port, int vc_number )
 
 }
 
-void Router::_VCAllocEvaluate( )
+void ENoCRouter::_VCAllocEvaluate( )
 {
     deque<pair<int, pair<pair<int, int>, int> > >::iterator iter;
 	
@@ -243,7 +250,7 @@ void Router::_VCAllocEvaluate( )
 
 
 	/*int out_vc = -1;
-        Router const *r = _output_channels[out_port]->GetSink();
+        ENoCRouter const *r = _output_channels[out_port]->GetSink();
    
                 int in_port;
                 if(out_port == 0)
@@ -344,7 +351,7 @@ void Router::_VCAllocEvaluate( )
 		_vc_alloc_vcs.insert(it, _vc_alloc_vcs_tmp.begin(), _vc_alloc_vcs_tmp.end());
 		_vc_alloc_vcs_tmp.clear();     
 }
-void Router::_SWAllocEvaluate( )
+void ENoCRouter::_SWAllocEvaluate( )
 {
     
   deque<pair<int, pair<pair<int, int>, int> > >::iterator iter;  
@@ -429,9 +436,9 @@ void Router::_SWAllocEvaluate( )
 		_sw_alloc_vcs_tmp.clear();    
 }
 
-bool Router::FindFreeSpace(int out_port, int vc_number)
+bool ENoCRouter::FindFreeSpace(int out_port, int vc_number)
 {      
-        Router const *r = _output_channels[out_port]->GetSink();
+        ENoCRouter const *r = _output_channels[out_port]->GetSink();
         
         int in_port;
         
@@ -446,14 +453,14 @@ bool Router::FindFreeSpace(int out_port, int vc_number)
         
     
         int size = r->_buf[in_port]->GetOccupancy( vc_number );
-        //if(size < GlobalParams::vcs_size)
+        //if(size < theConfig->GetInt("vcs_size"))
         if(size < DEFAULT_VCS_SIZE)
                 return true;
         else
                 return false;	
 }
 
-void Router::_SendFlits( )
+void ENoCRouter::_SendFlits( )
 {
   for ( int output = 0; output < _outputs; ++output ) {
     if ( !_output_buffer[output].empty( ) ) {
@@ -462,10 +469,29 @@ void Router::_SendFlits( )
       Flit * const last_flit = _output_channels_last_flit[output];
 
 
-      //int signaling  = GlobalParams::signaling;//0;
-      //int encoding   = GlobalParams::encoding;//0;
-      int signaling  = SIGNALING_LEVEL;//0;
-      int encoding   = ENCODING_BINARY;//0;
+      //int signaling  = SIGNALING_LEVEL;//0;
+      //int encoding   = ENCODING_BINARY;//0;
+      int signaling  = SIGNALING_TRANSITION;//0;
+      int encoding   = ENCODING_BUS_INVERT;//0;
+      /*
+      int signaling  = 0;
+      int encoding   = 0;
+
+      string str = theConfig->GetStr("signaling");
+      if(str == "level")
+          signaling = 0;
+      else
+          signaling = 1;
+          
+      
+      str = theConfig->GetStr("encoding");
+      if(str == "binary")
+          encoding = 0;
+      else
+          encoding = 1;
+                
+      */
+
 
       Calc_Flips( signaling, encoding, f, last_flit);
 
@@ -509,7 +535,7 @@ void Router::_SendFlits( )
   }
 }
 
-void  Router::Calc_Flips(int signaling,int encoding, Flit* cur, Flit* last)
+void  ENoCRouter::Calc_Flips(int signaling,int encoding, Flit* cur, Flit* last)
 {
 
       bool  flit_bits[34];
@@ -619,13 +645,13 @@ void  Router::Calc_Flips(int signaling,int encoding, Flit* cur, Flit* last)
 
 }
 
-void Router::WriteOutputs(int global_clk)
+void ENoCRouter::WriteOutputs(int global_clk)
 {
   _SendFlits( );
  // _SendCredits( );
 }
 
-void Router::From8bitINT(uint8_t c, bool b[8])
+void ENoCRouter::From8bitINT(uint8_t c, bool b[8])
 {
     for (int i=0; i < 8; ++i){
         b[i] = (c & (1<<i)) != 0;
@@ -633,7 +659,7 @@ void Router::From8bitINT(uint8_t c, bool b[8])
     }
 }
 
-void Router::From32bitINT(uint32_t c, bool b[32])
+void ENoCRouter::From32bitINT(uint32_t c, bool b[32])
 {
     for (int i=0; i < 32; ++i){
         b[i] = (c & (1<<i)) != 0;
@@ -641,7 +667,7 @@ void Router::From32bitINT(uint32_t c, bool b[32])
     }
 }
 
-void  Router::Get_Bits_of_Flits(Flit* flit, bool  flit_bits[34])
+void  ENoCRouter::Get_Bits_of_Flits(Flit* flit, bool  flit_bits[34])
 {
 
     //bool  flit_bits[34];
@@ -684,7 +710,7 @@ void  Router::Get_Bits_of_Flits(Flit* flit, bool  flit_bits[34])
 
 }
 
-void  Router::Bus_Invert_coding(Flit* flit, bool  cur_flit[34], bool last_flit[34] )
+void  ENoCRouter::Bus_Invert_coding(Flit* flit, bool  cur_flit[34], bool last_flit[34] )
 {
  	int n_flip = 0; 
 	int not_n_flip = 0;
@@ -729,11 +755,11 @@ void  Router::Bus_Invert_coding(Flit* flit, bool  cur_flit[34], bool last_flit[3
        // cout << " flips: " << n_flip <<  endl;   
 }
 
-double Router::GetStaticEnergy()
+double ENoCRouter::GetStaticEnergy()
 {
     return stats.energy_router.GetStaticEnergy();
 }
-double Router::GetDynamicEnergy()
+double ENoCRouter::GetDynamicEnergy()
 {
     return stats.energy_router.GetDynamicEnergy();    
 }

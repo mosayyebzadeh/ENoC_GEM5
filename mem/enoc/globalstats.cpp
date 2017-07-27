@@ -1,10 +1,14 @@
 
-#include <fstream>
+#include "router.h"
 #include "globalstats.h"
+#include <fstream>
 
-GlobalStats::GlobalStats( NetworkNoC * _noc)
+GlobalStats::GlobalStats( const Configuration &config,NetworkNoC * _noc)
 {
     _net = _noc;
+    
+     //_total_sims = config.GetInt("_total_sims");
+     _total_sims = _total_sims_def;
 
 }
 
@@ -13,7 +17,7 @@ unsigned int GlobalStats::getReceivedFlits(){
     
     unsigned int n = 0;
   
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -25,7 +29,7 @@ unsigned int GlobalStats::getReceivedFlits(){
 unsigned int GlobalStats::getReceivedPackets(){
     unsigned int n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -37,7 +41,7 @@ unsigned long long int GlobalStats::getNumberFlips()
 {
     unsigned long long int n = 0;
         
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)    
@@ -52,7 +56,7 @@ unsigned int GlobalStats::getNumberFlips_Num(int flipnum)
 {
     unsigned int n = 0;
         
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)  
@@ -68,7 +72,7 @@ double GlobalStats::getAverageDelay()
     int count = 0;
     double tmp;
         
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++){
@@ -85,7 +89,7 @@ double GlobalStats::getAverageDelay()
 double GlobalStats::getStaticEnergy(){
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -96,7 +100,7 @@ double GlobalStats::getStaticEnergy(){
 double GlobalStats::getDynamicEnergy(){
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -108,7 +112,7 @@ double GlobalStats::Get_link_dyn_energy(){
 
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -121,7 +125,7 @@ double GlobalStats::Get_buff_dyn_energy(){
 
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -132,7 +136,7 @@ double GlobalStats::Get_xbar_dyn_energy(){
 
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -143,7 +147,7 @@ double GlobalStats::Get_VCA_dyn_energy(){
 
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -154,7 +158,7 @@ double GlobalStats::Get_SWA_dyn_energy(){
 
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
 	for ( int i=0; i<num_routers; i++)
@@ -166,7 +170,7 @@ double  GlobalStats::Get_head_flit_dynamic_energy()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -177,7 +181,7 @@ double  GlobalStats::Get_body_flit_dynamic_energy()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -188,7 +192,7 @@ double  GlobalStats::Get_tail_flit_dynamic_energy()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -201,7 +205,7 @@ double  GlobalStats::Get_Num_head_flit()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -213,7 +217,7 @@ double  GlobalStats::Get_Num_body_flit()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -225,7 +229,7 @@ double  GlobalStats::Get_Num_tail_flit()
 {
     double n = 0;
 
-    vector<Router *> _ru = _net->GetRouters();
+    vector<ENoCRouter *> _ru = _net->GetRouters();
     int    num_routers = _net->NumRouters( );
     
     for ( int i=0; i<num_routers; i++)
@@ -233,6 +237,44 @@ double  GlobalStats::Get_Num_tail_flit()
     return n;  
 
 }  
+
+double  GlobalStats::Get_dynamic_energy_for_packet( int pk_type)
+{
+    double n = 0;
+
+    vector<ENoCRouter *> _ru = _net->GetRouters();
+    int    num_routers = _net->NumRouters( );
+    
+    for ( int i=0; i<num_routers; i++)
+        n += _ru[i]->stats.pkt_info[pk_type].dynamic_energy;
+    return n;  
+
+}
+double  GlobalStats::Get_link_energy_for_packet( int pk_type)
+{
+    double n = 0;
+
+    vector<ENoCRouter *> _ru = _net->GetRouters();
+    int    num_routers = _net->NumRouters( );
+    
+    for ( int i=0; i<num_routers; i++)
+        n += _ru[i]->stats.pkt_info[pk_type].link_dynamic_energy;
+    return n;  
+
+}
+
+double  GlobalStats::Get_Flips_energy_for_packet( int pk_type)
+{
+    double n = 0;
+
+    vector<ENoCRouter *> _ru = _net->GetRouters();
+    int    num_routers = _net->NumRouters( );
+    
+    for ( int i=0; i<num_routers; i++)
+        n += _ru[i]->stats.pkt_info[pk_type].flip_numbers;
+    return n;  
+
+}
 
 void GlobalStats::showStats(std::ostream & out)
 {
@@ -322,7 +364,18 @@ void GlobalStats::showStats(std::ostream & out)
       out << "% Avg body Flit    Energy (j) :                   "  << std::dec << Get_body_flit_dynamic_energy()/Get_Num_body_flit()  << endl;
       out << "% Avg tail Flit    Energy (j) :                   "  << std::dec << Get_tail_flit_dynamic_energy()/Get_Num_tail_flit()  << endl;
 
+			out << "------  Packet Breakdown Energy Report----------      " << endl  ;     
+			for (int i =0 ; i < Num_Packet_Types ; i++)
+			{
+				
+				
+  	    out << "% Packet type "<< i << " Dynamic Energy (j) :                   "  << std::dec << Get_dynamic_energy_for_packet(i)<< endl;
+	      out << "% Packet tyoe "<< i << " link Energy (j) :                      "  << std::dec << Get_link_energy_for_packet(i) << endl;
+  	    out << "% Packet type "<< i << " Flips Energy (j) :                     "  << std::dec << Get_Flips_energy_for_packet(i)  << endl;
 
+
+
+			}
 
 
 

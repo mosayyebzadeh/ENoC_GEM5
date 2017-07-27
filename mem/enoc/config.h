@@ -2,12 +2,11 @@
 #define _CONFIG_HPP_
 
 
-#include<cstdio>
-#include<string>
-#include<map>
-#include<vector>
-
-extern "C" int yyparse();
+#include    <cstdio>
+#include    <string>
+#include    <map>
+#include    <vector>
+using namespace std;
 
 class Configuration {
   static Configuration * theConfig;
@@ -32,17 +31,11 @@ public:
   int GetInt(string const & field) const;
   double GetFloat(string const & field) const;
 
-  vector<string> GetStrArray(const string & field) const;
-  vector<int> GetIntArray(const string & field) const;
-  vector<double> GetFloatArray(const string & field) const;
-
   void ParseFile(string const & filename);
-  void ParseString(string const & str);
-  int  Input(char * line, int max_size);
-  void ParseError(string const & msg, unsigned int lineno = 0) const;
+
   
-  void WriteFile(string const & filename);
-  void WriteMatlabFile(ostream * o) const;
+  void ShowConfigParameters();
+
 
   inline const map<string, string> & GetStrMap() const {
     return _str_map;

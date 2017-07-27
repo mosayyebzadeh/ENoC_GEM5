@@ -56,19 +56,15 @@ void ENoCCache::setLRUbitsToWay()
 int ENoCCache::checkTag(int index, int tag)
 {
   int way;
-//	printf("AMIN TEST: %s : %d: WAYS is %d\n", __func__, __LINE__, WAYS);
   for (way = 0; way < WAYS; way++)
   {
 	
-//	printf("AMIN TEST: %s : %d: index: %d, way: %d\n", __func__, __LINE__, index, way);
 //	if (index >= 8192)
 //		index = 1000;
 
     if (Cache[index][way].tag == tag)
        return way;
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
   } 
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
   return WAYS;
 }
 
@@ -290,6 +286,7 @@ void ENoCCache::sendSharedData(int src, int node, PacketPtr pkt, int time, Traff
 	int Lway = 0;
 	int Lindex = (pkt->getAddr() >> 6) & (LINES-1);
 	int type = 2;
+	uint8_t *data = pkt->getPtr<uint8_t>();
 
 		Lway = checkTag(Lindex, tag);
 
@@ -310,13 +307,14 @@ void ENoCCache::sendSharedData(int src, int node, PacketPtr pkt, int time, Traff
 
 		}
 	 
-		//message from directory to memory
+		//message from dst cache to requesting cache
 		packetNoC.src_id = src;
 		packetNoC.dst_id = node;
 		packetNoC.time = time + 5;
-		packetNoC.data = "abcdefg"; //TODO: send actual data
+		packetNoC.data = *data; //TODO: send actual data
 	
-		type = 2; //memory
+		type = 2; //cache
+		packetNoC.packet_type = 8;
 		trafficmanager->packet_table[src][type].push(packetNoC);	
 
 

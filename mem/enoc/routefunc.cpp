@@ -43,7 +43,7 @@ int gNodes = DEFAULT_MESH_DIM_X * DEFAULT_MESH_DIM_X;
   }
 }
 
-void xy_yx_mesh( const Router *r,  Flit *f, int in_channel  )
+void xy_yx_mesh( const ENoCRouter *r,  Flit *f, int in_channel  )
 {
   //int vcBegin = 0, vcEnd = GlobalParams::num_vcs-1;
   int vcBegin = 0, vcEnd = DEFAULT_NUM_VCS-1;

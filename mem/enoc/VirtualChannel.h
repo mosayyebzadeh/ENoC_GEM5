@@ -6,6 +6,7 @@
 #include <deque>
 #include "flit.h"
 #include "module.h"
+#include "config.h"
 
 
 class VirtualChannel : public Module {
@@ -13,7 +14,7 @@ class VirtualChannel : public Module {
 public:
     enum VCState { idle , routing, vc_alloc, active };
     static const char * const VCSTATE[];
-    VirtualChannel(  Module *parent, const string& name );
+    VirtualChannel( const Configuration &config, Module *parent, const string& name );
   
     //  ~VirtualChannel();
   
@@ -27,6 +28,7 @@ private:
   int _out_port, _out_vc;
 
   int occupancy;
+ const Configuration * theConfig;
 
 public:
   void AddFlit( Flit *f );

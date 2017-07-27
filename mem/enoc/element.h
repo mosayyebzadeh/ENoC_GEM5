@@ -3,6 +3,9 @@
 #ifndef _ELEMENT_HPP
 #define _ELEMENT_HPP
 
+#include "config.h"
+#include "NoCMain.h"
+
 class Element
 {
 protected:
@@ -12,6 +15,8 @@ protected:
     double leakage_power;
     double dynamic_energy;
 
+    double cycle_time;
+    const Configuration * theConfig;
 
 public:
     double getArea() { return  area; }
@@ -19,69 +24,89 @@ public:
     double getDynamicEnergy() { return  dynamic_energy; }
     double getDelay() { return delay; }
 
+    //Element(const Configuration &config);
+
 };
 
 class Inv : public Element
 {
 public:
-    Inv()
+    void Initialize(const Configuration &config)//Inv()
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.01e-9 ;
+        
+       /* delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.01e-9 ;
         leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 14.35*1e-9  ;
         dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 1.85*1e-15 ;
-
+	*/	
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * config.GetFloat("InvX1_delay") ;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * config.GetFloat("InvX1_leakagePower");
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * config.GetFloat("InvX1_dynamicEnergy");		
+        
     }
 };
 
 class AND2_X1 : public Element
 {
 public:
-    AND2_X1()
+    void Initialize(const Configuration &config)//AND2_X1()
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.02*1e-9; //0.02 ns
+        /*delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.02*1e-9; //0.02 ns
         leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 25.07*1e-9; //25.07 nw
         dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 3.04*1e-15; //3.04 fj
-
+        */
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * config.GetFloat("AND2_X1_delay") ;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * config.GetFloat("AND2_X1_leakagePower");
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * config.GetFloat("AND2_X1_dynamicEnergy");	        
     }
 };
 
 class OR2_X1 : public Element
 {
 public:
-    OR2_X1()
+    void Initialize(const Configuration &config)//OR2_X1()
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.04*1e-9;
+        /*delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.04*1e-9;
         leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 22.69*1e-9 ;
         dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 3.10*1e-15;
-
+        */
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * config.GetFloat("OR2_X1_delay") ;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * config.GetFloat("OR2_X1_leakagePower");
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * config.GetFloat("OR2_X1_dynamicEnergy");        
     }
 };
 
 class OR4_X1 : public Element
 {
 public:
-    OR4_X1()
+    void Initialize(const Configuration &config)//OR4_X1()
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.11*1e-9;
+        /*delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.11*1e-9;
         leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 26.73*1e-9 ;
         dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 4.67*1e-15;
-
+        */
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * config.GetFloat("OR4_X1_delay") ;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * config.GetFloat("OR4_X1_leakagePower");
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * config.GetFloat("OR4_X1_dynamicEnergy");          
     }
 };
 
 class FF_X1 : public Element
 {
 public:
-    FF_X1()
+    void Initialize(const Configuration &config)//FF_X1()
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.08*1e-9;
+        /*delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.08*1e-9;
         leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 79.11*1e-9 ;
         dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 4.36*1e-15;
+        */
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * config.GetFloat("FF_X1_delay") ;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * config.GetFloat("FF_X1_leakagePower");
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * config.GetFloat("FF_X1_dynamicEnergy");          
 
     }
 };
@@ -103,17 +128,21 @@ public:
 
 class VCAllocator : public Element
 {
-   
-    
-    AND2_X1 and2;
-    OR2_X1  or2;
-    OR4_X1  or4;    
-    Inv  not1;
-    FF_X1   ff1;
+        AND2_X1 and2;
+        OR2_X1  or2;
+        OR4_X1  or4;    
+        Inv  not1;
+        FF_X1   ff1;    
+
     
 public:
-    VCAllocator()
+    void Initialize(const Configuration &config)//VCAllocator()
     {    
+        and2.Initialize(config);
+        or2.Initialize(config);
+        or4.Initialize(config);
+        not1.Initialize(config);
+        ff1.Initialize(config);
         //area = ;
         delay = or4.getDelay() + not1.getDelay() + and2.getDelay() + or2.getDelay();
         int leakage_tmp =3*and2.getLeakagePower()+2*or2.getLeakagePower()+2*not1.getLeakagePower()+ff1.getLeakagePower();
@@ -129,16 +158,21 @@ public:
 class SWAllocator : public Element
 {
 
-    
-    AND2_X1 and2;
-    OR2_X1  or2;
-    OR4_X1  or4;
-    Inv     not1;
-    FF_X1   ff1;
+        AND2_X1 and2;
+        OR2_X1  or2;
+        OR4_X1  or4;
+        Inv     not1;
+        FF_X1   ff1;    
+
     
 public:
-    SWAllocator()
-    {    
+    void Initialize(const Configuration &config)//
+    { 
+        and2.Initialize(config);
+        or2.Initialize(config);
+        or4.Initialize(config);
+        not1.Initialize(config);
+        ff1.Initialize(config);
         //area = ;
         delay = or4.getDelay() + not1.getDelay() + and2.getDelay() + or2.getDelay();
         int leakage_tmp =3*and2.getLeakagePower()+2*or2.getLeakagePower()+2*not1.getLeakagePower()+ff1.getLeakagePower();
@@ -154,12 +188,14 @@ public:
 class CrossBar : public Element
 {
 public:
-    CrossBar()
+    void Initialize(const Configuration &config)
     {    
         //area = ;
-        delay = SCALING_FACTOR_45n_TO_32nm_LATENCY * 0.15*1e-9;
-        leakage_power = SCALING_FACTOR_45n_TO_32nm_POWER * 170*143.72*1e-9 ;
-        dynamic_energy = SCALING_FACTOR_45n_TO_32nm_ENERGY * 170*15.2*1e-15;
+        delay = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_LATENCY") * 0.15*1e-9;
+        leakage_power = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_POWER") * 170*143.72*1e-9 ;
+        dynamic_energy = config.GetFloat("SCALING_FACTOR_45n_TO_32nm_ENERGY") * 170*15.2*1e-15;
+
+
 
     }
 };

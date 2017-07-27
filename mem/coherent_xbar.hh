@@ -63,6 +63,7 @@
 #include "mem/enoc/globalstats.h"
 #include "mem/enoc/NoCMain.h"
 #include "mem/enoc/ENoC_cache.h"
+#include "mem/enoc/config.h"
 
 extern GlobalStats *enoc_gs;
 

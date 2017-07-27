@@ -40,6 +40,7 @@ ENoCDir::~ENoCDir()
 
 void ENoCDir::invalidatePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1ICache, ENoCCache **L2Cache, int time, TrafficManager *trafficmanager, int dir_index)
 {
+//printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	int addr = pkt->getAddr();
 	bool find = false; 
 	int index = 0;
@@ -51,6 +52,9 @@ void ENoCDir::invalidatePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **
 	int L1Dway = 0;
 	int L1Iway = 0;
 	int L2way = 0;
+
+	vector <int> newline;
+	newline.resize(NUMBER_OF_NODES+1);
 
 	int L1Dindex = (pkt->getAddr() >> 6) & (L1DLines[node]-1);
   int L1Iindex = ( pkt->getAddr() >> 6) & (L1ILines[node]-1);
@@ -68,9 +72,9 @@ void ENoCDir::invalidatePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **
 	
 	if (find == true)
 	{
-		for (int i = 1; i < NUMBER_OF_NODES+1; i ++)
+		for (int i = 0; i < NUMBER_OF_NODES; i ++)
 		{
-			if (lines[index][i] != I) //it is not invalid
+			if (lines[index][i+1] != I) //it is not invalid
 			{
 				L1Iway = L1ICache[i]->checkTag(L1Iindex, tag);
 				L1Dway = L1DCache[i]->checkTag(L1Dindex, tag);
@@ -98,13 +102,25 @@ void ENoCDir::invalidatePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **
 				packetNoC.time = time + 5;
 	
 				type = 2; //cache
+				packetNoC.packet_type = 4;
 				trafficmanager->packet_table[packetNoC.src_id][type].push(packetNoC);	
 
 
-				lines[index][i] = I;
+				lines[index][i+1] = I;
 			}
 		}
 		lines[index][node] = E; //exclusive
+	}
+	else
+	{
+		newline[0] = addr;
+		newline[node] = E;
+		lines.insert(lines.end(), newline);
+		//lines.resize(lines.size()+1);
+		//for (int k=0; k < lines.size(); k++)
+		//	lines[k].resize(NUMBER_OF_NODES+1);
+		//lines[lines.size()-1][0] = addr;
+		//lines[lines.size()-1][node] = E;
 	}
 	
 }
@@ -116,11 +132,15 @@ void ENoCDir::receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1I
 
 	int addr = pkt->getAddr();
 	bool find = false; 
+	bool Sharedfind = false; 
 	int index = 0;
 	PacketNoC packetNoC;
 	int node = ((int)pkt->req->masterId())% 6;
 
 	int tag = (pkt->getAddr()) >> 20;
+
+	vector <int> newline;
+	newline.resize(NUMBER_OF_NODES+1);
 
 	int L1Dway = 0;
 	int L1Iway = 0;
@@ -145,14 +165,13 @@ void ENoCDir::receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1I
 	
 	if (find == true)
 	{
-		find = false;
 		for (i = 1; i < NUMBER_OF_NODES+1; i ++)
 		{
 			//the line is shared
 			if (lines[index][i] == S)
 			{
 				lines[index][node] = S;
-				find = true;
+				Sharedfind = true;
 				break;
 			}
 			//if line is in M, it should be downgraded
@@ -160,26 +179,31 @@ void ENoCDir::receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1I
 			{
 				lines[index][node] = S;
 				lines[index][i] = S;
-				find = true;
+				Sharedfind = true;
 				break;
 			}
 		}
 	}
-	else
+	else //find == false
 	{
-			lines[index][node] = E;
+		newline[0] = addr;
+		newline[node] = E;
+		lines.insert(lines.end(), newline);
+		/*	lines.resize(lines.size()+1);
+			for (int k=0; k < lines.size(); k++)
+				lines[k].resize(NUMBER_OF_NODES+1);
+			lines[lines.size()-1][0] = addr;
+			lines[lines.size()-1][node] = E;
+		*/
 	}
 
-	if (find == true)
+	if (Sharedfind == true)
 	{
-
-//	printf("AMIN TEST: %s : %d: before L1I\n", __func__, __LINE__);
+		i--; //for cache sake
+		
 		L1Iway = L1ICache[i]->checkTag(L1Iindex, tag);
-//	printf("AMIN TEST: %s : %d: before L1D\n", __func__, __LINE__);
 		L1Dway = L1DCache[i]->checkTag(L1Dindex, tag);
-//	printf("AMIN TEST: %s : %d: before L2\n", __func__, __LINE__);
 		L2way = L2Cache[i]->checkTag(L2index, tag);
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 
 		if (L1Dway < L1DCache[i]->WAYS)
 		{
@@ -210,64 +234,50 @@ void ENoCDir::receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1I
 			packetNoC.time = time + 5;
 	
 			type = 2; //cache
+			packetNoC.packet_type = 5;
 			trafficmanager->packet_table[packetNoC.src_id][type].push(packetNoC);	
 
 		}
 		else
-			find = false;
+			Sharedfind = false;
 	}
 	//nobody has the data, asking memory
-	else if (find == false)
+	if (Sharedfind == false)
 	{
-
-//	printf("AMIN TEST: %s : %d: before L1I\n", __func__, __LINE__);
 		L1Iway = L1ICache[node]->checkTag(L1Iindex, tag);
-//	printf("AMIN TEST: %s : %d: before L1D\n", __func__, __LINE__);
 		L1Dway = L1DCache[node]->checkTag(L1Dindex, tag);
-//	printf("AMIN TEST: %s : %d: before L2\n", __func__, __LINE__);
 		L2way = L2Cache[node]->checkTag(L2index, tag);
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 
 		if (pkt->req->isInstFetch())
 		{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 			if (L1Iway < L1ICache[node]->WAYS)
 			{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 				L1ICache[node]->Cache[L1Iindex][L1Iway].MESIbits = E;
         L1ICache[node]->updateLRU(L1Iindex, L1Iway);
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 			}
 		}
 		else
 		{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 			if (L1Dway < L1DCache[node]->WAYS)
 			{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 				L1DCache[node]->Cache[L1Dindex][L1Dway].MESIbits = E;
         L1DCache[node]->updateLRU(L1Dindex, L1Dway);
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 			}
 		}
 		// if L2 has the data
 		if (L2way < L2Cache[node]->WAYS)
 		{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 			L2Cache[node]->Cache[L2index][L2way].MESIbits = E;
       L2Cache[node]->updateLRU(L2index, L2way);
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 		}
 		else
 		{
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 		 		L2way = L2Cache[node]->checkLRU(L2index);
         L2Cache[node]->updateLRU(L2index, L2way);
         L2Cache[node]->Cache[L2index][L2way].tag = tag;
         L2Cache[node]->Cache[L2index][L2way].address = pkt->getAddr();
 			  L2Cache[node]->Cache[L2index][L2way].MESIbits = E;
 	
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
 				//TODO: write data from memory to cache
 
 		}
@@ -286,23 +296,55 @@ void ENoCDir::receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1I
 		packetNoC.time = time + 5;
 	
 		type = 1; //memory
+		packetNoC.packet_type = 6;
 		trafficmanager->packet_table[packetNoC.src_id][type].push(packetNoC);	
 
 		//message from  memory to cache
 		packetNoC.src_id = (pkt->getAddr()) >> 26;
 		packetNoC.dst_id = node;
 		packetNoC.time = time + 10;
-		packetNoC.data = "abcdefg"; //TODO: send actual data
-//	printf("AMIN TEST: %s : %d: address is: %ld\n", __func__, __LINE__, pkt->getAddr()>>26);
+
+		uint8_t *data = pkt->getPtr<uint8_t>();
+		packetNoC.data = *data; 
 
 		type = 2; //cache
+		packetNoC.packet_type = 7;
 		trafficmanager->packet_table[(pkt->getAddr()) >> 26][type].push(packetNoC);	
-//	printf("AMIN TEST: %s : %d: after L2\n", __func__, __LINE__);
-
-
 
 	}
 
+}
+
+void ENoCDir::evictPacket(PacketPtr pkt)
+{
+	int addr = pkt->getAddr();
+	int node = ((int)pkt->req->masterId())% 6;
+	bool find = false;
+
+	vector <int> newline;
+	newline.resize(NUMBER_OF_NODES+1);
+
+	for (int i = 0; i < lines.size(); i ++)
+		if (lines[i][0] == addr)
+		{
+			lines[i][node] = I;
+			find = true;
+			break;
+		}
+
+	if (find == false)
+	{
+		newline[0] = addr;
+		newline[node] = E;
+		lines.insert(lines.end(), newline);
+		/*
+ 		lines.resize(lines.size()+1);
+		for (int k=0; k < lines.size(); k++)
+			lines[k].resize(NUMBER_OF_NODES+1);
+		lines[lines.size()-1][0] = addr;
+		lines[lines.size()-1][node] = I;
+		*/
+	}
 }
 
 

@@ -64,12 +64,18 @@ CoherentXBar::CoherentXBar(const CoherentXBarParams *p)
 {
 
 	/* AMIN_ST */
+
 //	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
-    	net = new NetworkNoC("network_0");
+          Configuration  config;// = new Configuration();
+          config.ParseFile("config.txt");
+          
+          config.ShowConfigParameters();
+   
+    	net = new NetworkNoC(config, "network_0");
 //	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
-        trafficManager = TrafficManager::New(net);
+        trafficManager = TrafficManager::New(config, net);
 //	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
-	enoc_gs = new GlobalStats(net);
+	enoc_gs = new GlobalStats(config, net);
 //	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	/* AMIN_EN */
 	

@@ -11,12 +11,14 @@
 #include "statsNoC.h"
 #include "NoCMain.h"
 #include "element.h"
-
+#include "config.h"
 
 
 using namespace std;
 
-class Router : public TimedModule{
+class Configuration;
+
+class ENoCRouter : public TimedModule{
 
 public:
   
@@ -59,6 +61,8 @@ public:
     InputBuffer _inb;
     CrossBar    _xbar;
 
+    const Configuration * theConfig;
+
   bool _ReceiveFlits( );
   void clk(int global_clk);
   void _InputQueuing(int global_clk);
@@ -86,8 +90,8 @@ public:
  
   inline int GetID( ) const {return _id;}
  
-  static  Router* NewRouter(Module *parent, const string & name, int id,int inputs, int outputs);
-  Router(Module *parent, const string & name, int id,int inputs, int outputs);
+  static  ENoCRouter* NewRouter( const Configuration &config, Module *parent, const string & name, int id,int inputs, int outputs);
+  ENoCRouter( const Configuration &config, Module *parent, const string & name, int id,int inputs, int outputs);
   
 };
 

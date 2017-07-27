@@ -5,6 +5,7 @@
 #include <vector>
 #include "VirtualChannel.h"
 #include "flit.h"
+#include "config.h"
 
 
 class Buffer : public Module {
@@ -18,7 +19,7 @@ class Buffer : public Module {
 
 public:
   
-  Buffer(  Module *parent, const string& name );
+  Buffer(  const Configuration &config,Module *parent, const string& name );
 //  ~Buffer();
 
   void AddFlit( int vc, Flit *f );

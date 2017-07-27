@@ -23,8 +23,11 @@ class ENoCDir
 		
 		void invalidatePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1ICache, ENoCCache **L2Cache, int time, TrafficManager *tm, int dir_index);
 		void receivePacket(PacketPtr pkt, ENoCCache **L1DCache, ENoCCache **L1ICache, ENoCCache **L2Cache, int time, TrafficManager *tm, int dir_index);
+		
+		void evictPacket(PacketPtr pkt);
 
 		ENoCDir(ENoCCache **L1DCache, ENoCCache **L1ICache, ENoCCache **L2Cache);
+
 		~ENoCDir();
 
 		int *L1DLines;

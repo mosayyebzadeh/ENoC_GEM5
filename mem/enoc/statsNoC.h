@@ -8,6 +8,8 @@
  
 //using namespace std;
 
+#define Num_Packet_Types   9
+
 struct CommHistory {
     
     int                 src_id;
@@ -25,6 +27,22 @@ struct CommHistory {
      
 
 };
+
+
+struct packet_info {
+    
+    unsigned long long int                 flip_numbers;
+    
+    double              dynamic_energy;
+    
+    double              link_dynamic_energy;
+    double              buffer_dynamic_energy;    
+    double              crossbar_dynamic_energy;        
+    double              vc_allocator_dynamic_energy;        
+    double              sw_allocator_dynamic_energy;     
+    
+};
+    
 
 class StatsNoC {
     
@@ -67,6 +85,8 @@ class StatsNoC {
     int id;
    vector<CommHistory> chist;
    int searchCommHistory(int src_id);  
+   
+   vector<packet_info> pkt_info;
 };
 
 #endif

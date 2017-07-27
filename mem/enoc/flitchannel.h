@@ -9,15 +9,15 @@
 
 using namespace std;
 
-class Router ;
+class ENoCRouter ;
 
 class FlitChannel : public Channel<Flit> {
 public:
   FlitChannel(Module * parent, string const & name, int classes);
 
-  void SetSource(Router const * const router, int port) ;
+  void SetSource(ENoCRouter const * const router, int port) ;
   
-  inline Router const * GetSource() const {
+  inline ENoCRouter const * GetSource() const {
     return _routerSource;
   }
   
@@ -25,9 +25,9 @@ public:
     return _routerSourcePort;
   }
   
-  void SetSink(Router const * const router, int port) ;
+  void SetSink(ENoCRouter const * const router, int port) ;
   
-  inline Router const * GetSink() const {
+  inline ENoCRouter const * GetSink() const {
     return _routerSink;
   }
   inline int const & GetSinkPort() const {
@@ -51,9 +51,9 @@ private:
   //
   ////////////////////////////////////////
 
-  Router const * _routerSource;
+  ENoCRouter const * _routerSource;
   int _routerSourcePort;
-  Router const * _routerSink;
+  ENoCRouter const * _routerSink;
   int _routerSinkPort;
 
   // Statistics for Activity Factors

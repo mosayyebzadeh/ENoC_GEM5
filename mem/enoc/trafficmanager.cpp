@@ -12,7 +12,7 @@
 #include "trafficmanager.h"
 //#include "VirtualChannel.h"
 
-TrafficManager * TrafficManager::New(NetworkNoC * net)
+TrafficManager * TrafficManager::New(const Configuration &config, NetworkNoC * net)
 {
     TrafficManager * result = NULL;
     result = new TrafficManager( net);
@@ -41,9 +41,9 @@ TrafficManager::TrafficManager(  NetworkNoC *  net )
 	L2Cache = new ENoCCache*[NUMBER_OF_NODES]; 
 
     for(int i = 0; i < _nodes; i++){
-			L1DCache[i] = new ENoCCache(8192, 4);
-			L1ICache[i] = new ENoCCache(8192, 4);
-			L2Cache[i] = new ENoCCache(16484, 8);
+			L1DCache[i] = new ENoCCache(16484, 8);
+			L1ICache[i] = new ENoCCache(16484, 8);
+			L2Cache[i] = new ENoCCache(32968, 16);
 
 			L1DCache[i]->setLRUbitsToWay();
 			L1ICache[i]->setLRUbitsToWay();
@@ -98,8 +98,7 @@ void TrafficManager::process(PacketPtr pkt)
   int L2index = ( pkt->getAddr() >> 6) & (L2Cache[node]->LINES-1);
 
 	int Dir_index = 0;
-
-//	printf("AMIN TEST: %s : %d: ADDRESS is %ld\n", __func__, __LINE__, pkt->getAddr());
+	uint8_t *data = pkt->getPtr<uint8_t>();
 
 	PacketNoC packetNoC;
 
@@ -113,8 +112,8 @@ void TrafficManager::process(PacketPtr pkt)
 		cmd = 3;
 	else if (pkt->isInvalidate())
 		cmd = 4;
-	//else if (pkt->needsExclusive())
-	//	cmd = 5;
+	else if (pkt->isEviction())
+		cmd = 5;
 	else if (pkt->isRequest())
 		cmd = 6;
 	else if (pkt->isResponse())
@@ -127,33 +126,27 @@ void TrafficManager::process(PacketPtr pkt)
 	switch(cmd)
 	{
 		case 0:
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			L1Iway = L1ICache[node]->checkTag(L1Iindex, tag);
       // if the tag exists
 			if (L1Iway < L1ICache[node]->WAYS)
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			  MESI = L1ICache[node]->Cache[L1Iindex][L1Iway].MESIbits;
 	   		// if this tag exists and it's valid as per its MESI bits
 	   		if (MESI == M || MESI == E || MESI == S)
 	   		{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	      	L1ICache[node]->updateLRU(L1Iindex, L1Iway);
 					//TODO: send data to GEM5
   	   	}
 	   		// data is invalidated in L1, checking L2
 				else 
         {
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 					L2way = L2Cache[node]->checkTag(L2index, tag);
 					if (L2way < L2Cache[node]->WAYS)
 					{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 						//data in L2. update L1 and L2
 			  		MESI = L2Cache[node]->Cache[L2index][L2way].MESIbits;
 	  		 		if (MESI == M || MESI == E || MESI == S)
 	   				{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 							//printf("L1Ihit is %d\n", L2hitCount);
 	  		    	L2Cache[node]->updateLRU(L2index, L2way);
 	      			L1ICache[node]->updateLRU(L1Iindex, L1Iway);
@@ -165,8 +158,6 @@ void TrafficManager::process(PacketPtr pkt)
 						//asking directory. The destination node will update source's cache
 						else
 						{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
-
 							packetNoC.src_id = node;
 
 							Dir_index = node/16;
@@ -184,9 +175,11 @@ void TrafficManager::process(PacketPtr pkt)
 
 
 							packetNoC.time = (int) pkt->req->time();
-							packetNoC.data = *(pkt->getPtr<int>());
+							//there is no need of data for directory
+							//packetNoC.data = *(pkt->getPtr<int>());
 	
 							type = 0; //directory
+							packetNoC.packet_type = 0;
 							packet_table[node][type].push(packetNoC);	
 						
 						}	
@@ -195,7 +188,6 @@ void TrafficManager::process(PacketPtr pkt)
 					//asking dirctory
 					else
 					{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 							packetNoC.src_id = node;
 							//packetNoC.dst_id = DIRECTORY_ADDRESS;
@@ -217,6 +209,7 @@ void TrafficManager::process(PacketPtr pkt)
 							//packetNoC.data = *(pkt->getptr<int>());
 	
 							type = 0; //directory
+							packetNoC.packet_type = 0;
 							packet_table[node][type].push(packetNoC);	
 	
 					}
@@ -226,7 +219,6 @@ void TrafficManager::process(PacketPtr pkt)
       // in L1 and L2
       else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 				packetNoC.src_id = node;
 
@@ -247,38 +239,33 @@ void TrafficManager::process(PacketPtr pkt)
 				//packetNoC.data = *(pkt->getptr<int>());
 	
 				type = 0; //directory
+				packetNoC.packet_type = 0;
 				packet_table[node][type].push(packetNoC);	
 	
 			}
 			break;
 		case 1:
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			L1Dway = L1DCache[node]->checkTag(L1Dindex, tag);
       // if the tag exists
 			if (L1Dway < L1DCache[node]->WAYS)
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			  MESI = L1DCache[node]->Cache[L1Dindex][L1Dway].MESIbits;
 	   		// if this tag exists and it's valid as per its MESI bits
 	   		if (MESI == M || MESI == E || MESI == S)
 	   		{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	      	L1DCache[node]->updateLRU(L1Dindex, L1Dway);
 					//TODO: send data to GEM5
   	   	}
 	   		// data is invalidated in L1, checking L2
 				else 
         {
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 					L2way = L2Cache[node]->checkTag(L2index, tag);
 					if (L2way < L2Cache[node]->WAYS)
 					{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 						//data in L2. update L1 and L2
 			  		MESI = L2Cache[node]->Cache[L2index][L2way].MESIbits;
 	  		 		if (MESI == M || MESI == E || MESI == S)
 	   				{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 							//printf("L1Dhit is %d\n", L2hitCount);
 	  		    	L2Cache[node]->updateLRU(L2index, L2way);
 	      			L1DCache[node]->updateLRU(L1Dindex, L1Dway);
@@ -307,9 +294,10 @@ void TrafficManager::process(PacketPtr pkt)
 
 
 							packetNoC.time = (int) pkt->req->time();
-							packetNoC.data = *(pkt->getPtr<int>());
+							//packetNoC.data = *(pkt->getPtr<int>());
 	
 							type = 0; //directory
+							packetNoC.packet_type = 0;
 							packet_table[node][type].push(packetNoC);	
 						
 						}	
@@ -318,7 +306,6 @@ void TrafficManager::process(PacketPtr pkt)
 					//asking dirctory
 					else
 					{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 							packetNoC.src_id = node;
 
@@ -339,6 +326,7 @@ void TrafficManager::process(PacketPtr pkt)
 							//packetNoC.data = *(pkt->getptr<int>());
 	
 							type = 0; //directory
+							packetNoC.packet_type = 0;
 							packet_table[node][type].push(packetNoC);	
 	
 					}
@@ -348,7 +336,6 @@ void TrafficManager::process(PacketPtr pkt)
       // in L1 and L2
       else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 				packetNoC.src_id = node;
 
@@ -369,13 +356,13 @@ void TrafficManager::process(PacketPtr pkt)
 				//packetNoC.data = *(pkt->getptr<int>());
 	
 				type = 0; //directory
+				packetNoC.packet_type = 0;
 				packet_table[node][type].push(packetNoC);	
 	
 			}
 			break;
 		case 2:
 		case 3:
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			L1Dway = L1DCache[node]->checkTag(L1Dindex, tag);
       // if the tag exists
 			if (L1Dway < L1DCache[node]->WAYS)
@@ -385,18 +372,16 @@ void TrafficManager::process(PacketPtr pkt)
       // in L1 and L2
       else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 				L1Dway = L1DCache[node]->checkLRU(L1Dindex);
        	L1DCache[node]->Cache[L1Dindex][L1Dway].tag = tag;
 			}
 
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			//ask directory to invalidate others
 
 			packetNoC.src_id = node;
 
 			Dir_index = node/16;
-			Directory->receivePacket(pkt, L1DCache, L1ICache, L2Cache, (int)pkt->req->time(), this, Dir_index);
+			Directory->invalidatePacket(pkt, L1DCache, L1ICache, L2Cache, (int)pkt->req->time(), this, Dir_index);
 
 			if (node < 16)
 				packetNoC.dst_id = DIRECTORY_ADDRESS_0;
@@ -408,14 +393,16 @@ void TrafficManager::process(PacketPtr pkt)
 				packetNoC.dst_id = DIRECTORY_ADDRESS_3;
 
 			packetNoC.time = (int) pkt->req->time();
-			packetNoC.data = *(pkt->getPtr<int>());
+			//packetNoC.data = *(pkt->getPtr<int>());
 	
 			type = 0; //directory
+			packetNoC.packet_type = 1;
 			packet_table[node][type].push(packetNoC);	
 
 	   	L1DCache[node]->updateLRU(L1Dindex, L1Dway);
 		 	L1DCache[node]->Cache[L1Dindex][L1Dway].MESIbits = M;
 		  L1DCache[node]->Cache[L1Dindex][L1Dway].address = addr;
+		  L1DCache[node]->Cache[L1Dindex][L1Dway].data = *data;
 
 			//updating L2
 			L2way = L2Cache[node]->checkTag(L2index, tag);
@@ -424,19 +411,16 @@ void TrafficManager::process(PacketPtr pkt)
 			}
 			else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 				L2way = L2Cache[node]->checkLRU(L2index);
      		L2Cache[node]->Cache[L2index][L2way].tag = tag;
 			}
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	    L2Cache[node]->updateLRU(L2index, L2way);
 		  L2Cache[node]->Cache[L2index][L2way].address = addr;
 	   	L2Cache[node]->Cache[L2index][L2way].MESIbits = M;
+	   	L2Cache[node]->Cache[L2index][L2way].data = *data;
 
 			break;
 		case 4:
-		case 5:
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			L1Dway = L1DCache[node]->checkTag(L1Dindex, tag);
       // if the tag exists
 			if (L1Dway < L1DCache[node]->WAYS)
@@ -446,18 +430,16 @@ void TrafficManager::process(PacketPtr pkt)
       // in L1 and L2
       else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 				L1Dway = L1DCache[node]->checkLRU(L1Dindex);
        	L1DCache[node]->Cache[L1Dindex][L1Dway].tag = tag;
 			}
 
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 			//ask directory to invalidate others
 
 			packetNoC.src_id = node;
 
 			Dir_index = node/16;
-			Directory->receivePacket(pkt, L1DCache, L1ICache, L2Cache, (int)pkt->req->time(), this, Dir_index);
+			Directory->invalidatePacket(pkt, L1DCache, L1ICache, L2Cache, (int)pkt->req->time(), this, Dir_index);
 
 			if (node < 16)
 				packetNoC.dst_id = DIRECTORY_ADDRESS_0;
@@ -470,9 +452,10 @@ void TrafficManager::process(PacketPtr pkt)
 
 
 			packetNoC.time = (int) pkt->req->time();
-			packetNoC.data = *(pkt->getPtr<int>());
+			//packetNoC.data = *(pkt->getPtr<int>());
 	
 			type = 0; //directory
+			packetNoC.packet_type = 1;
 			packet_table[node][type].push(packetNoC);	
 
 	   	L1DCache[node]->updateLRU(L1Dindex, L1Dway);
@@ -486,14 +469,70 @@ void TrafficManager::process(PacketPtr pkt)
 			}
 			else
 			{
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 				L2way = L2Cache[node]->checkLRU(L2index);
      		L2Cache[node]->Cache[L2index][L2way].tag = tag;
 			}
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 	    L2Cache[node]->updateLRU(L2index, L2way);
 		  L2Cache[node]->Cache[L2index][L2way].address = addr;
 	   	L2Cache[node]->Cache[L2index][L2way].MESIbits = E;
+
+			break;
+
+		case 5:
+			L1Dway = L1DCache[node]->checkTag(L1Dindex, tag);
+      // if the tag exists
+			if (L1Dway < L1DCache[node]->WAYS)
+				L1DCache[node]->Cache[L1Dindex][L1Dway].MESIbits = I;
+      // this tag simply doesn't exist in the cache in any form
+      // in L1 and L2
+      else
+			{
+			}
+
+			//send invalid info to directory
+			packetNoC.src_id = node;
+
+			Dir_index = node/16;
+			Directory->evictPacket(pkt);
+
+			if (node < 16)
+				packetNoC.dst_id = DIRECTORY_ADDRESS_0;
+			else if (node < 32)
+				packetNoC.dst_id = DIRECTORY_ADDRESS_1;
+			else if (node < 48)
+				packetNoC.dst_id = DIRECTORY_ADDRESS_2;
+			else if (node < 64)
+				packetNoC.dst_id = DIRECTORY_ADDRESS_3;
+
+			packetNoC.time = (int) pkt->req->time();
+			//packetNoC.data = *(pkt->getPtr<int>());
+	
+			type = 0; //directory
+			packetNoC.packet_type = 2;
+			packet_table[node][type].push(packetNoC);	
+
+
+			//send data to memory
+			packetNoC.src_id = node;
+			packetNoC.dst_id = (pkt->getAddr()) >> 26;
+			packetNoC.time = (int) pkt->req->time()+2;
+			packetNoC.data = L1DCache[node]->Cache[L1Dindex][L1Dway].data;
+	
+			type = 1; //memory
+			packetNoC.packet_type = 3;
+			packet_table[node][type].push(packetNoC);	
+
+			//TODO: write actual data to memory
+
+			//updating L2
+			L2way = L2Cache[node]->checkTag(L2index, tag);
+			if (L2way < L2Cache[node]->WAYS)
+			{
+				L2Cache[node]->Cache[L2index][L2way].MESIbits = I;
+			}
+			else
+			{
+			}
 
 			break;
 
@@ -506,7 +545,7 @@ void TrafficManager::process(PacketPtr pkt)
 
 
 
-//	printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
+	//printf("AMIN TEST: %s : %d\n", __func__, __LINE__);
 
 				// TODO: the code for updating source cache
 				/*
@@ -582,6 +621,7 @@ Flit*  TrafficManager::nextFlit(int src, int global_clk, int type)
 
     flit->src_id      = packet.src_id;
     flit->dst_id      = packet.dst_id;
+    flit->packet_type = packet.packet_type;
 
 
 //masoud
@@ -701,14 +741,14 @@ bool TrafficManager::IsNextFlitHead(int nodes, int type)
 }
 void TrafficManager::SetIdleStateForVC(int nodes, int vc_number, VirtualChannel::VCState s)
 {
-		vector<Router *> _ru = _net->GetRouters();//;
+		vector<ENoCRouter *> _ru = _net->GetRouters();//;
 		_ru[nodes]->_buf[4]->SetState( vc_number, s );
 }
 bool TrafficManager::FindFreeSpace(int nodes, int vc_number)
 {
 	if( vc_number != -1)
 	{
-		vector<Router *> _ru = _net->GetRouters();//;
+		vector<ENoCRouter *> _ru = _net->GetRouters();//;
 		int size = _ru[nodes]->_buf[4]->GetOccupancy( vc_number );
 		
 		//if(size < GlobalParams::vcs_size)
@@ -723,7 +763,7 @@ bool TrafficManager::FindFreeSpace(int nodes, int vc_number)
 }
 int TrafficManager::FindAvailableVC(int nodes)
 {
-	vector<Router *> _ru = _net->GetRouters();//;
+	vector<ENoCRouter *> _ru = _net->GetRouters();//;
 	int out_vc = -1;
 	int occup_tmp = _ru[nodes]->_buf[4]->GetOccupancy(0);
 	int occup;
@@ -741,7 +781,7 @@ int TrafficManager::FindAvailableVC(int nodes)
 
 int TrafficManager::FindIdleVC(int nodes)
 {
-	vector<Router *> _ru = _net->GetRouters();//;
+	vector<ENoCRouter *> _ru = _net->GetRouters();//;
 	 
 	VirtualChannel::VCState state ;
 	 

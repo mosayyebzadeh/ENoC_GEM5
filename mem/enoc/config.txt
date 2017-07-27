@@ -1,0 +1,4 @@
+signaling = level
+encoding = binary
+dimx = 8
+vcs_size = 8

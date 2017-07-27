@@ -27,13 +27,16 @@ using namespace std;
 #define __CACHE_LINES_BYTE          64
 //#define MAX_STATIC_DIM               20
 
-#define	_total_sims			78000
+#define	_total_sims_def			78000
 
 
 #define DEFAULT_TRAFFIC_TABLE_FILENAME           ""
+#define DEFAULT_OUTPUT_FILENAME           ""
+#define DEFAULT_CONFIG_FILENAME           "config.txt"
+
 #define DEFAULT_GLOBAL_CLK			 0
 #define DEFAULT_MESH_DIM_X                       8
-#define DEFAULT_MESH_DIM_Y                       8
+//#define DEFAULT_MESH_DIM_Y                       8
 
 #define DEFAULT_NUM_VCS		 		8
 #define DEFAULT_VCS_SIZE	 		8
@@ -47,12 +50,12 @@ using namespace std;
 
 #define SWITCHING_ACTIVITY                            0.25  
 
-#define SCALING_FACTOR_45n_TO_32nm_LATENCY            0.91  
-#define SCALING_FACTOR_45n_TO_32nm_ENERGY             0.66  
-#define SCALING_FACTOR_45n_TO_32nm_POWER              0.66
+//#define SCALING_FACTOR_45n_TO_32nm_LATENCY            0.91  
+//#define SCALING_FACTOR_45n_TO_32nm_ENERGY             0.66  
+//#define SCALING_FACTOR_45n_TO_32nm_POWER              0.66
 
 
-#define SIGNALING_LEVEL                            1
+#define SIGNALING_LEVEL                            0
 #define SIGNALING_TRANSITION                       1 
 
 #define ENCODING_BINARY                            0
@@ -62,16 +65,19 @@ using namespace std;
 
 
 struct GlobalParams {
-	static int                          mesh_dim_x;
-	static int                          mesh_dim_y;
+	//static int                          mesh_dim_x;
+	//static int                          mesh_dim_y;
 //	static int                          mesh_dim_z;
 	static char                         traffic_table_filename[128];
+    static char                         output_filename[128];
+    static char                         config_filename[128];
+
 	static int			    global_clk;
-	static int			    num_vcs;	
-	static int			    vcs_size;
+	//static int			    num_vcs;	
+	//static int			    vcs_size;
     static bool                         detailed;
-    static int                          signaling;
-    static int                          encoding;        
+    //static int                          signaling;
+    //static int                          encoding;        
 };
 
   enum FlitType { FLIT_TYPE_HEAD, FLIT_TYPE_BODY, FLIT_TYPE_TAIL };
@@ -85,6 +91,7 @@ struct PacketNoC {
     int    size;
     int    flit_left;		// Number of remaining flits inside the packet
 
+    int    packet_type;
     
     string data;
     int    time;

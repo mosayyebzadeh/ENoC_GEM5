@@ -10,7 +10,7 @@
 #include "module.h"
 #include "Network.h"
 #include "flit.h"
-#include "routefunc.h"
+//#include "routefunc.h"
 #include "NoCMain.h"
 #include "VirtualChannel.h"
 #include "ENoC_cache.h"
@@ -35,7 +35,7 @@ protected:
   int _vcs;
 
   NetworkNoC * _net;
-  vector<Router *>  _router;
+  vector<ENoCRouter *>  _router;
   
 	int packet_queue_length;
   vector<vector<int> > in_use_vc;                
@@ -54,7 +54,7 @@ public:
 
 
   //static TrafficManager * New();
-  static TrafficManager *New(NetworkNoC * net);
+  static TrafficManager *New( const Configuration &config, NetworkNoC * net);
 
   TrafficManager(NetworkNoC *net);
   virtual ~TrafficManager( );

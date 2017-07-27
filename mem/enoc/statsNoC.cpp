@@ -17,7 +17,18 @@ StatsNoC::StatsNoC()
     Num_head_flit  = 0;   
     Num_body_flit  = 0;  
     Num_tail_flit  = 0;   
-
+    
+    pkt_info.resize(Num_Packet_Types);
+    
+    for (unsigned int i = 0; i < Num_Packet_Types; i++)
+    {
+        pkt_info[i].flip_numbers                    =  0;
+        pkt_info[i].link_dynamic_energy             =  0;        
+        pkt_info[i].buffer_dynamic_energy           =  0;
+        pkt_info[i].crossbar_dynamic_energy         =  0;
+        pkt_info[i].vc_allocator_dynamic_energy     =  0;
+        pkt_info[i].sw_allocator_dynamic_energy     =  0;
+      }
 }
 int StatsNoC::searchCommHistory(int src_id)
 {
@@ -98,7 +109,15 @@ void StatsNoC::receivedFlit(const int arrival_time, const Flit * flit)
                 break;                 
 
        }
-	 
+
+        pkt_info[flit->packet_type].flip_numbers                    +=  flit->flipNumber;
+        pkt_info[flit->packet_type].link_dynamic_energy             +=  flit->link_dynamic_energy;        
+        pkt_info[flit->packet_type].buffer_dynamic_energy           +=  SWITCHING_ACTIVITY * flit->buffer_dynamic_energy;
+        pkt_info[flit->packet_type].crossbar_dynamic_energy         +=  SWITCHING_ACTIVITY * flit->crossbar_dynamic_energy;
+        pkt_info[flit->packet_type].vc_allocator_dynamic_energy     +=  SWITCHING_ACTIVITY * flit->vc_allocator_dynamic_energy;
+        pkt_info[flit->packet_type].sw_allocator_dynamic_energy     +=  SWITCHING_ACTIVITY * flit->sw_allocator_dynamic_energy;
+        
+        pkt_info[flit->packet_type].dynamic_energy                  +=  flit_energy;
 }
 
 

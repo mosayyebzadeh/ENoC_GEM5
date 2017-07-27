@@ -4,6 +4,7 @@
  
 #include "NoCMain.h"
 #include "element.h"
+#include "config.h"
 using namespace std;
 
 class Energy {
@@ -42,6 +43,8 @@ class Energy {
     
     double GetStaticEnergy();
     double GetDynamicEnergy();
+    
+    void Initialize(const Configuration &config);
     
     
 

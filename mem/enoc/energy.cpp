@@ -14,7 +14,12 @@ Energy::Energy()
     dynamic_energy = 0;
     
 }
-
+void Energy::Initialize(const Configuration &config)
+{
+    _swa.Initialize(config);
+    _vca.Initialize(config);
+    _xbar.Initialize(config);
+}
 double Energy::GetStaticEnergy()
 {
     return static_energy;

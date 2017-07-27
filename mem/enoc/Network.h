@@ -14,7 +14,7 @@ class NetworkNoC : public TimedModule{
 private:
     // Tile  *t[MAX_STATIC_DIM][MAX_STATIC_DIM];
      
-     vector<Router *> _routers;
+     vector<ENoCRouter *> _routers;
      vector<FlitChannel *> _chan;
      vector<FlitChannel *> _inject;
      vector<FlitChannel *> _eject;
@@ -28,10 +28,10 @@ private:
      int _nodes ;
   
 public: 
-     NetworkNoC( const string & name );
+     NetworkNoC( const Configuration &config, const string & name );
      ~NetworkNoC( );
      void _Alloc( );
-     void buildMesh();
+     void buildMesh( const Configuration &config);
      bool load_traffic(char* fname);
      void clk(int global_clk);
      
@@ -42,7 +42,7 @@ public:
      
      int NumNodes( ) const {return _size;}
      int NumRouters() const {return _size;}
-     const vector<Router *> & GetRouters(){return _routers;}
+     const vector<ENoCRouter *> & GetRouters(){return _routers;}
        void WriteFlit( Flit *f, int source );
        Flit *ReadFlit( int dest );
        void ReadInputs(int global_clk);
